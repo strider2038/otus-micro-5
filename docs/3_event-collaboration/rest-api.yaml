@@ -1,0 +1,237 @@
+---
+openapi: 3.0.0
+info:
+  title: Public API
+  version: 1.0.0
+servers:
+  - url: http://example.domain/api/v1/
+    description: Example Server
+tags:
+  - name: identity
+    description: Identity service
+  - name: ordering
+    description: Order service
+  - name: billing
+    description: Billing service
+  - name: notifications
+    description: Notification service
+security:
+  - UserRequest: []
+paths:
+  /identity/login:
+    post:
+      security: []
+      tags:
+        - identity
+      summary: Login to the system
+      operationId: loginUser
+      requestBody:
+        description: Login form
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+      responses:
+        "200":
+          description: Login response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /identity/logout:
+    post:
+      tags:
+        - identity
+      summary: Logout from the system
+      operationId: logoutUser
+      responses:
+        "204":
+          description: Logout succeeded
+  /identity/profile:
+    get:
+      tags:
+        - identity
+      description: Returns a current user profile
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: User response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders:
+    get:
+      tags: [ordering]
+      description: Get current user orders
+      operationId: getOrders
+      responses:
+        "200":
+          description: Order response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+  /account:
+    get:
+      tags: [billing]
+      description: Read current user account
+      operationId: getBillingAccount
+      responses:
+        "200":
+          description: Billing account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingAccount'
+
+  /notifications:
+    get:
+      tags: [ notifications ]
+      description: Get current user notifications
+      operationId: getNotifications
+      responses:
+        "200":
+          description: Notifications response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+
+components:
+  securitySchemes:
+    UserRequest:
+      type: apiKey
+      in: header
+      name: X-User-Id
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+          format: phone
+    Login:
+      type: object
+      required: [ email, password ]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    AccessToken:
+      type: object
+      required: [ accessToken ]
+      properties:
+        accessToken:
+          type: string
+    Order:
+      type: object
+      required: [ id, price ]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        price:
+          type: number
+          minimum: 1
+        status:
+          type: string
+          enum:
+            - pending
+            - succeeded
+            - failed
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+    BillingAccount:
+      type: object
+      properties:
+        amount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+    BillingUpdate:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+    Payment:
+      type: object
+      required: [amount]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        amount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+    Error:
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string

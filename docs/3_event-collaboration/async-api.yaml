@@ -1,0 +1,269 @@
+asyncapi: 2.0.0
+info:
+  title: Ordering system
+  version: '1.0.0'
+  description: |
+    Ordering system based on event notifications
+defaultContentType: application/json
+
+channels:
+  Gateway/RegistrationRequested:
+    publish:
+      message:
+        tags:
+          - name: gateway
+        name: User registration
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+            firstName:
+              type: string
+            lastName:
+              type: string
+            phone:
+              type: string
+              format: phone
+
+  Gateway/BillingAccountDeposit:
+    publish:
+      message:
+        tags:
+          - name: gateway
+        name: Deposit to billing account
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            amount:
+              type: number
+              minimum: 1.0
+
+  Gateway/BillingAccountWithdraw:
+    publish:
+      message:
+        tags:
+          - name: gateway
+        name: Withdraw from billing account
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            amount:
+              type: number
+              minimum: 1.0
+
+  Gateway/CreateOrder:
+    publish:
+      message:
+        tags:
+          - name: gateway
+        name: Create order
+        title: User creates an order
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            userId:
+              type: string
+              format: uuid
+            price:
+              type: number
+              minimum: 1.0
+
+  Identity/UserCreated:
+    publish:
+      message:
+        tags:
+          - name: identity
+        name: User created
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+              format: email
+            firstName:
+              type: string
+            lastName:
+              type: string
+            phone:
+              type: string
+              format: phone
+
+  Order/OrderCreated:
+    publish:
+      message:
+        tags:
+          - name: order
+        name: Order created
+        title: Order succesfully created
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            price:
+              type: number
+              minimum: 1.0
+
+  Order/OrderFailed:
+    publish:
+      message:
+        tags:
+          - name: order
+        name: Order failed
+        title: Order creation failed
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            price:
+              type: number
+              minimum: 1.0
+            reason:
+              type: string
+
+  Billing/BillingAccountDepositSucceded:
+    publish:
+      message:
+        tags:
+          - name: billing
+        name: Deposit to billing account succeded
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+
+  Billing/BillingAccountDepositFailed:
+    publish:
+      message:
+        tags:
+          - name: billing
+        name: Deposit to billing account failed
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            reason:
+              type: string
+
+  Billing/BillingAccountWithdrawSucceded:
+    publish:
+      message:
+        tags:
+          - name: billing
+        name: Withdraw from billing account succeded
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+
+  Billing/BillingAccountWithdrawFailed:
+    publish:
+      message:
+        tags:
+          - name: billing
+        name: Withdraw from billing account failed
+        correlationId:
+          $ref: '#/components/correlationIds/defaultCorrelationId'
+        payload:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            reason:
+              type: string
+
+  Billing/CreatePayment:
+    subscribe:
+      message:
+        tags:
+          - name: order
+          - name: billing
+        name: Create payment
+        payload:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            userId:
+              type: string
+              format: uuid
+            amount:
+              type: number
+              minimum: 1.0
+
+  Billing/PaymentCreated:
+    publish:
+      message:
+        tags:
+          - name: billing
+        name: Payment created
+        payload:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+
+  Billing/PaymentFailed:
+    publish:
+      message:
+        tags:
+          - name: billing
+        name: Payment failed
+        payload:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+
+components:
+  correlationIds:
+    defaultCorrelationId:
+      description: Default Correlation ID
+      location: $message.header#/correlationId
