@@ -1,7 +1,7 @@
 ---
 openapi: 3.0.0
 info:
-  title: Public API
+  title: Services API (hybrid variant)
   version: 1.0.0
 servers:
   - url: http://example.domain/api/v1/
