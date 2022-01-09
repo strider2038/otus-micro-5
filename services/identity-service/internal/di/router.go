@@ -69,9 +69,11 @@ func NewRouter(connection *pgxpool.Pool, config Config) (http.Handler, error) {
 		writer.WriteHeader(http.StatusOK)
 		response, _ := json.Marshal(struct {
 			Environment        string `json:"environment"`
+			ApplicationName    string `json:"application_name"`
 			ApplicationVersion string `json:"application_version"`
 		}{
 			Environment:        config.Environment,
+			ApplicationName:    "IdentityService",
 			ApplicationVersion: config.Version,
 		})
 		writer.Write(response)
@@ -83,19 +85,6 @@ func NewRouter(connection *pgxpool.Pool, config Config) (http.Handler, error) {
 	}
 
 	router.Handle("/.well-known/jwks.json", jwksHandler)
-
-	router.PathPrefix("/").HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		writer.Header().Set("content-type", "application/json")
-		writer.WriteHeader(http.StatusOK)
-		response, _ := json.Marshal(struct {
-			ApplicationName string `json:"application_name"`
-			URL             string `json:"url"`
-		}{
-			ApplicationName: "IdentityService",
-			URL:             request.URL.String(),
-		})
-		writer.Write(response)
-	})
 
 	return router, nil
 }

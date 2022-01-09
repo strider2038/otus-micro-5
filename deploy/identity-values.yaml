@@ -8,6 +8,8 @@ migrations:
 
 postgresql:
   postgresqlPassword: "pa$$word"
+  persistence:
+    size: 2Gi
 
 secrets:
   postgres:

@@ -2,13 +2,19 @@
 
 package database
 
-import ()
+import (
+	"time"
+
+	"github.com/gofrs/uuid"
+)
 
 type User struct {
-	ID        int64
+	ID        uuid.UUID
 	Email     string
 	Password  string
 	FirstName string
 	LastName  string
 	Phone     string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

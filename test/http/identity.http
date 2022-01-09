@@ -23,22 +23,6 @@ Content-Type: application/json
 
 {
   "email": "{{userEmail}}",
-  "password": "invalid"
-}
-
-> {%
-client.test("Login with invalid password", function() {
-  client.assert(response.status === 422, "Response status is not 422");
-});
- %}
-
-###
-
-POST {{host}}/api/v1/identity/login
-Content-Type: application/json
-
-{
-  "email": "{{userEmail}}",
   "password": "pa$$word"
 }
 

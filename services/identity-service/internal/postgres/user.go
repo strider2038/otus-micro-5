@@ -8,6 +8,7 @@ import (
 	"identity-service/internal/postgres/database"
 	"identity-service/internal/users"
 
+	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -19,7 +20,7 @@ func NewUserRepository(db *database.Queries) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (repository *UserRepository) FindByID(ctx context.Context, id int64) (*users.User, error) {
+func (repository *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*users.User, error) {
 	u, err := repository.db.FindUser(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, users.ErrUserNotFound
@@ -35,6 +36,8 @@ func (repository *UserRepository) FindByID(ctx context.Context, id int64) (*user
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		Phone:     u.Phone,
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
 	}, nil
 }
 
@@ -54,6 +57,8 @@ func (repository *UserRepository) FindByEmail(ctx context.Context, email string)
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		Phone:     u.Phone,
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
 	}, nil
 }
 
@@ -69,8 +74,9 @@ func (repository *UserRepository) Save(ctx context.Context, user *users.User) er
 	var u database.User
 	var err error
 
-	if user.ID == 0 {
+	if user.ID.IsNil() {
 		u, err = repository.db.CreateUser(ctx, database.CreateUserParams{
+			ID:        uuid.Must(uuid.NewV4()),
 			Email:     user.Email,
 			Password:  user.Password,
 			FirstName: user.FirstName,
@@ -99,11 +105,13 @@ func (repository *UserRepository) Save(ctx context.Context, user *users.User) er
 	user.FirstName = u.FirstName
 	user.LastName = u.LastName
 	user.Phone = u.Phone
+	user.CreatedAt = u.CreatedAt
+	user.UpdatedAt = u.UpdatedAt
 
 	return nil
 }
 
-func (repository *UserRepository) Delete(ctx context.Context, id int64) error {
+func (repository *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	err := repository.db.DeleteUser(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete user: %w", err)

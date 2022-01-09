@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"identity-service/internal/di"
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/strider2038/httpserver"
 )
 
 var (
@@ -34,5 +37,12 @@ func main() {
 
 	address := fmt.Sprintf(":%d", config.Port)
 	log.Println("starting HTTP server at", address)
-	log.Fatal(http.ListenAndServe(address, router))
+	server := httpserver.New(address, router)
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	err = server.ListenAndServe(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

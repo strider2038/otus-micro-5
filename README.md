@@ -6,12 +6,16 @@
 
 [Исследование вариантов реализации системы](docs/design.md).
 
-Для реализации выбран гибридный вариант (REST + Event collaboration).
+Для реализации выбран гибридный вариант (REST + Event collaboration). Для упрощения сервисы объединяют в себе
+HTTP серверы и Kafka Consumer'ы, поэтому масштабирование подов ограничено количеством партиций топиков в Kafka.
 
 ### TODO
 
 * [x] identity service (dispatch events)
 * [ ] billing service
+  * [x] billing api
+  * [x] billing identity consumer
+  * [ ] billing worker
 * [ ] order service
 * [ ] notification service
 
@@ -20,7 +24,7 @@
 ```shell
 # запуск minikube
 # версия k8s v1.19, на более поздних есть проблемы с установкой ambassador
-minikube start --cpus=6 --memory=16g --vm-driver=virtualbox --cni=flannel --kubernetes-version="v1.19.0"
+minikube start --cpus=6 --memory=16g --disk-size='30000mb' --vm-driver=virtualbox --cni=flannel --kubernetes-version="v1.19.0"
 
 kubectl create namespace otus
 
@@ -28,7 +32,7 @@ kubectl create namespace otus
 helm install aes datawire/ambassador -f deploy/ambassador-values.yaml
 
 # установка Apache Kafka
-helm install kafka bitnami/kafka
+helm install kafka bitnami/kafka -f deploy/kafka-values.yaml
 
 ## запуск проекта
 helm install --wait -f deploy/identity-values.yaml identity-service ./services/identity-service/deployments/identity-service --atomic
@@ -53,9 +57,8 @@ docker run -v $PWD/test/postman/:/etc/newman --network host -t postman/newman:al
 
 ### Отладка
 
-Отладка kafka consumer
-
 ```shell
+# отладка kafka consumer
 kubectl run kafka-client --restart='Never' --image docker.io/bitnami/kafka:2.8.1-debian-10-r73 --namespace otus --command -- sleep infinity
 kubectl exec --tty -i kafka-client --namespace otus -- bash
 kafka-console-consumer.sh \
@@ -63,4 +66,7 @@ kafka-console-consumer.sh \
     --topic <TOPIC_NAME> \
     --property print.headers=true \
     --from-beginning
+    
+# отладка postgres
+kubectl port-forward svc/identity-service-postgresql 5432:5432
 ```

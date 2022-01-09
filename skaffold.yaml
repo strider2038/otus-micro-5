@@ -7,6 +7,7 @@ build:
     envTemplate:
       template: "v1"
   artifacts:
+    ### Identity service
     - image: strider2038/otus-micro-5-identity-service
       context: services/identity-service
       docker:
@@ -15,6 +16,18 @@ build:
           APP_VERSION: local
     - image: strider2038/otus-micro-5-identity-migrations
       context: services/identity-service
+      docker:
+        dockerfile: build/package/migrations/Dockerfile
+
+    ### Billing service
+    - image: strider2038/otus-micro-5-billing-service
+      context: services/billing-service
+      docker:
+        dockerfile: build/package/billing-service/Dockerfile
+        buildArgs:
+          APP_VERSION: local
+    - image: strider2038/otus-micro-5-billing-migrations
+      context: services/billing-service
       docker:
         dockerfile: build/package/migrations/Dockerfile
 
@@ -27,3 +40,10 @@ deploy:
         wait: true
         valuesFiles:
           - "deploy/identity-values.yaml"
+
+      - name: "billing-service"
+        namespace: "otus"
+        chartPath: "services/billing-service/deployments/billing-service"
+        wait: true
+        valuesFiles:
+          - "deploy/billing-values.yaml"

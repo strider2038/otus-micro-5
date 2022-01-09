@@ -1,0 +1,17 @@
+replicaCount: 2
+
+migrations:
+  version: "20220109132407"
+
+postgresql:
+  postgresqlPassword: "pa$$word"
+  persistence:
+    size: 2Gi
+
+secrets:
+  postgres:
+    password: "pa$$word"
+    host: "billing-service-postgresql.otus.svc.cluster.local"
+  kafka:
+    consumer:
+      url: "kafka.otus.svc.cluster.local:9092"

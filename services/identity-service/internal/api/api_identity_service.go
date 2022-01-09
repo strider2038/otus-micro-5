@@ -18,6 +18,7 @@ import (
 	"identity-service/internal/events"
 	"identity-service/internal/users"
 
+	"github.com/gofrs/uuid"
 	"github.com/muonsoft/validation/validator"
 )
 
@@ -47,7 +48,7 @@ func NewIdentityApiService(
 }
 
 // GetCurrentUser -
-func (s *IdentityApiService) GetCurrentUser(ctx context.Context, id int64) (ImplResponse, error) {
+func (s *IdentityApiService) GetCurrentUser(ctx context.Context, id uuid.UUID) (ImplResponse, error) {
 	user, err := s.users.FindByID(ctx, id)
 	if errors.Is(err, users.ErrUserNotFound) {
 		return Response(http.StatusForbidden, Error{
@@ -155,7 +156,7 @@ func (s *IdentityApiService) RegisterUser(ctx context.Context, form Registration
 }
 
 // UpdateCurrentUser -
-func (s *IdentityApiService) UpdateCurrentUser(ctx context.Context, id int64, form UpdateForm) (ImplResponse, error) {
+func (s *IdentityApiService) UpdateCurrentUser(ctx context.Context, id uuid.UUID, form UpdateForm) (ImplResponse, error) {
 	err := validator.ValidateValidatable(ctx, form)
 	if err != nil {
 		return Response(

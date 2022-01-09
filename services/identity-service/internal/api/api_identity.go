@@ -12,8 +12,9 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"strings"
+
+	"github.com/gofrs/uuid"
 )
 
 // A IdentityApiController binds http requests to an api service and writes the service results to the http response
@@ -64,9 +65,9 @@ func (c *IdentityApiController) Routes() Routes {
 
 // GetCurrentUser -
 func (c *IdentityApiController) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(r.Header.Get("X-User-Id"))
+	id := uuid.FromStringOrNil(r.Header.Get("X-User-Id"))
 
-	result, err := c.service.GetCurrentUser(r.Context(), int64(id))
+	result, err := c.service.GetCurrentUser(r.Context(), id)
 	// If an error occured, encode the error with the status code
 	if err != nil {
 		EncodeJSONResponse(err.Error(), &result.Code, w)
@@ -132,9 +133,9 @@ func (c *IdentityApiController) UpdateCurrentUser(w http.ResponseWriter, r *http
 		return
 	}
 
-	id, _ := strconv.Atoi(r.Header.Get("X-User-Id"))
+	id := uuid.FromStringOrNil(r.Header.Get("X-User-Id"))
 
-	result, err := c.service.UpdateCurrentUser(r.Context(), int64(id), *user)
+	result, err := c.service.UpdateCurrentUser(r.Context(), id, *user)
 	// If an error occured, encode the error with the status code
 	if err != nil {
 		EncodeJSONResponse(err.Error(), &result.Code, w)

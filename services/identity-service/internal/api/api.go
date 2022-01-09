@@ -12,6 +12,8 @@ package api
 import (
 	"context"
 	"net/http"
+
+	"github.com/gofrs/uuid"
 )
 
 // IdentityApiRouter defines the required methods for binding the api requests to a responses for the IdentityApi
@@ -30,9 +32,9 @@ type IdentityApiRouter interface {
 // while the service implementation can ignored with the .openapi-generator-ignore file
 // and updated with the logic required for the API.
 type IdentityApiServicer interface {
-	GetCurrentUser(context.Context, int64) (ImplResponse, error)
+	GetCurrentUser(context.Context, uuid.UUID) (ImplResponse, error)
 	LoginUser(context.Context, LoginForm) (ImplResponse, error)
 	LogoutUser(context.Context) (ImplResponse, error)
 	RegisterUser(context.Context, RegistrationForm) (ImplResponse, error)
-	UpdateCurrentUser(context.Context, int64, UpdateForm) (ImplResponse, error)
+	UpdateCurrentUser(context.Context, uuid.UUID, UpdateForm) (ImplResponse, error)
 }
