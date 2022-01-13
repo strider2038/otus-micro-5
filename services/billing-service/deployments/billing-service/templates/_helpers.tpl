@@ -75,3 +75,9 @@ Application secrets
 {{- printf "%s" .url | b64enc }}
 {{- end }}
 {{- end }}
+
+{{- define "kafkaProducerUrl" }}
+{{- with .Values.secrets.kafka.producer }}
+{{- printf "%s" .url | b64enc }}
+{{- end }}
+{{- end }}

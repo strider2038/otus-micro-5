@@ -43,6 +43,9 @@ secrets:
     consumer:
       # Required in values.yaml.
       url: ""
+    producer:
+      # Required in values.yaml.
+      url: ""
 
 postgresql:
   enabled: true

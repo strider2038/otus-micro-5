@@ -12,12 +12,13 @@ HTTP серверы и Kafka Consumer'ы, поэтому масштабиров�
 ### TODO
 
 * [x] identity service (dispatch events)
-* [ ] billing service
+* [x] billing service
   * [x] billing api
   * [x] billing identity consumer
-  * [ ] billing worker
+  * [x] billing worker
 * [ ] order service
 * [ ] notification service
+* [ ] transactions ?
 
 ### Запуск приложения
 

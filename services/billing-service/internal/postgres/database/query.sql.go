@@ -27,6 +27,30 @@ func (q *Queries) CreateAccount(ctx context.Context, id uuid.UUID) (Account, err
 	return i, err
 }
 
+const createPayment = `-- name: CreatePayment :one
+INSERT INTO "payment" (id, account_id, amount)
+VALUES ($1, $2, $3)
+RETURNING id, account_id, amount, created_at
+`
+
+type CreatePaymentParams struct {
+	ID        uuid.UUID
+	AccountID uuid.UUID
+	Amount    float64
+}
+
+func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error) {
+	row := q.db.QueryRow(ctx, createPayment, arg.ID, arg.AccountID, arg.Amount)
+	var i Payment
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Amount,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const findAccount = `-- name: FindAccount :one
 SELECT id, amount, created_at, updated_at
 FROM "account"

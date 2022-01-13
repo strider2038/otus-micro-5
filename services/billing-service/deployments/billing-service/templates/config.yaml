@@ -14,3 +14,4 @@ type: Opaque
 data:
   DATABASE_URL: {{ include "databaseUrl" . }}
   KAFKA_CONSUMER_URL: {{ include "kafkaConsumerUrl" . }}
+  KAFKA_PRODUCER_URL: {{ include "kafkaProducerUrl" . }}

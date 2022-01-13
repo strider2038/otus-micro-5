@@ -15,3 +15,5 @@ secrets:
   kafka:
     consumer:
       url: "kafka.otus.svc.cluster.local:9092"
+    producer:
+      url: "kafka-0.kafka-headless.otus.svc.cluster.local:9092"
