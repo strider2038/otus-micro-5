@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"billing-service/internal/messaging"
+	"order-service/internal/messaging"
 
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"

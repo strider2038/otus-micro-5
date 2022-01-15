@@ -31,6 +31,18 @@ build:
       docker:
         dockerfile: build/package/migrations/Dockerfile
 
+    ### Order service
+    - image: strider2038/otus-micro-5-order-service
+      context: services/order-service
+      docker:
+        dockerfile: build/package/order-service/Dockerfile
+        buildArgs:
+          APP_VERSION: local
+    - image: strider2038/otus-micro-5-order-migrations
+      context: services/order-service
+      docker:
+        dockerfile: build/package/migrations/Dockerfile
+
 deploy:
   helm:
     releases:
@@ -47,3 +59,10 @@ deploy:
         wait: true
         valuesFiles:
           - "deploy/billing-values.yaml"
+
+      - name: "order-service"
+        namespace: "otus"
+        chartPath: "services/order-service/deployments/order-service"
+        wait: true
+        valuesFiles:
+          - "deploy/order-values.yaml"

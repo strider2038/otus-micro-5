@@ -25,7 +25,8 @@ func (p PaymentCreated) Name() string {
 }
 
 type PaymentFailed struct {
-	ID uuid.UUID `json:"id"`
+	ID     uuid.UUID `json:"id"`
+	Reason string    `json:"reason"`
 }
 
 func (p PaymentFailed) Name() string {
@@ -33,20 +34,20 @@ func (p PaymentFailed) Name() string {
 }
 
 type CreatePaymentProcessor struct {
-	accounts        billing.AccountRepository
-	payments        billing.PaymentRepository
-	eventDispatcher EventDispatcher
+	accounts   billing.AccountRepository
+	payments   billing.PaymentRepository
+	dispatcher Dispatcher
 }
 
 func NewCreatePaymentProcessor(
 	accounts billing.AccountRepository,
 	payments billing.PaymentRepository,
-	eventDispatcher EventDispatcher,
+	dispatcher Dispatcher,
 ) *CreatePaymentProcessor {
 	return &CreatePaymentProcessor{
-		accounts:        accounts,
-		payments:        payments,
-		eventDispatcher: eventDispatcher,
+		accounts:   accounts,
+		payments:   payments,
+		dispatcher: dispatcher,
 	}
 }
 
@@ -64,7 +65,10 @@ func (processor *CreatePaymentProcessor) Process(ctx context.Context, message []
 
 	account.Amount -= command.Amount
 	if account.Amount < 0 {
-		err = processor.eventDispatcher.Dispatch(ctx, PaymentFailed{ID: command.ID})
+		err = processor.dispatcher.Dispatch(ctx, PaymentFailed{
+			ID:     command.ID,
+			Reason: "not enough money",
+		})
 		if err != nil {
 			return errors.WithMessage(err, "failed to dispatch PaymentFailed event")
 		}
@@ -86,7 +90,7 @@ func (processor *CreatePaymentProcessor) Process(ctx context.Context, message []
 		return errors.WithMessagef(err, `failed to save user account "%s"`, account.ID)
 	}
 
-	err = processor.eventDispatcher.Dispatch(ctx, PaymentCreated{ID: command.ID})
+	err = processor.dispatcher.Dispatch(ctx, PaymentCreated{ID: command.ID})
 	if err != nil {
 		return errors.WithMessage(err, "failed to dispatch PaymentCreated event")
 	}

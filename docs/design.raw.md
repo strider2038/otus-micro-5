@@ -305,12 +305,12 @@ sequenceDiagram
         Billing Service->>Message broker: publish PaymentCreated
         Message broker-->>Order Service: consume PaymentCreated
         Order Service->>Order Service: Update order with status succeded
-        Order Service->>Message broker: publish OrderCreated
+        Order Service->>Message broker: publish OrderSucceeded
         par Order notification
-            Message broker-->>Notification Service: consume OrderCreated
+            Message broker-->>Notification Service: consume OrderSucceeded
             Notification Service->>Client: Order succeded email
         and Order push event
-            Message broker-->>Push Service: consume OrderCreated
+            Message broker-->>Push Service: consume OrderSucceeded
             Push Service->>Client: HTTP/2 push event
         end
     else Order failed

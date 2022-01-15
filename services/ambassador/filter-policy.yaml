@@ -16,3 +16,7 @@ spec:
       path: "/api/v1/billing/*"
       filters:
         - name: "jwt-filter"
+    - host: "*"
+      path: "/api/v1/ordering/*"
+      filters:
+        - name: "jwt-filter"

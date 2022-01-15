@@ -30,7 +30,7 @@ channels:
               type: string
               format: phone
 
-  Order/OrderCreated:
+  Order/OrderSucceeded:
     publish:
       message:
         tags:
@@ -111,3 +111,5 @@ channels:
             id:
               type: string
               format: uuid
+            reason:
+              type: string

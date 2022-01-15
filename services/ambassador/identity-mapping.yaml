@@ -10,4 +10,4 @@ spec:
   service: identity-service:8000
   retry_policy:
     retry_on: "5xx"
-    num_retries: 10
+    num_retries: 2

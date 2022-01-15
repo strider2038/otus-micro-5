@@ -289,6 +289,12 @@ components:
         price:
           type: number
           minimum: 1
+        status:
+          type: string
+          enum:
+            - pending
+            - succeeded
+            - failed
         createdAt:
           type: string
           format: date-time

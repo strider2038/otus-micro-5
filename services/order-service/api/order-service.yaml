@@ -1,0 +1,97 @@
+---
+openapi: 3.0.0
+info:
+  title: Order service
+  version: 1.0.0
+servers:
+  - url: http://example.domain/api/v1/
+    description: Example Server
+tags:
+  - name: ordering
+    description: Order service
+security:
+  - UserRequest: []
+paths:
+  /orders:
+    get:
+      tags: [ordering]
+      description: Get current user orders
+      operationId: getOrders
+      responses:
+        "200":
+          description: Order response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+    post:
+      security: []
+      tags: [ordering]
+      description: Create a new order
+      operationId: createOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrder'
+      responses:
+        "204":
+          description: Order created
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    UserRequest:
+      type: apiKey
+      in: header
+      name: X-User-Id
+  schemas:
+    Order:
+      type: object
+      required: [ id, price ]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        price:
+          type: number
+          minimum: 1
+        status:
+          type: string
+          enum:
+            - pending
+            - succeeded
+            - failed
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+    CreateOrder:
+      type: object
+      required: [ userId, price ]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        price:
+          type: number
+          minimum: 1
+    Error:
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string

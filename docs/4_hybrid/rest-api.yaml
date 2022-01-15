@@ -16,11 +16,11 @@ tags:
   - name: notifications
     description: Notification service
 security:
-  - UserRequest: []
+  - UserRequest: [ ]
 paths:
   /identity/register:
     post:
-      security: []
+      security: [ ]
       tags:
         - identity
       summary: Register a user
@@ -54,7 +54,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /identity/login:
     post:
-      security: []
+      security: [ ]
       tags:
         - identity
       summary: Login to the system
@@ -141,7 +141,7 @@ paths:
 
   /orders:
     get:
-      tags: [ordering]
+      tags: [ ordering ]
       description: Get current user orders
       operationId: getOrders
       responses:
@@ -154,8 +154,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/Order'
     post:
-      security: []
-      tags: [ordering]
+      security: [ ]
+      tags: [ ordering ]
       description: Create a new order
       operationId: createOrder
       requestBody:
@@ -175,7 +175,7 @@ paths:
 
   /account:
     get:
-      tags: [billing]
+      tags: [ billing ]
       description: Read current user account
       operationId: getBillingAccount
       responses:
@@ -187,7 +187,7 @@ paths:
                 $ref: '#/components/schemas/BillingAccount'
   /account/deposit:
     post:
-      tags: [billing]
+      tags: [ billing ]
       description: Deposit money to user account
       operationId: depositMoney
       requestBody:
@@ -206,7 +206,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /account/withdraw:
     post:
-      tags: [billing]
+      tags: [ billing ]
       description: Withdraw money from user account
       operationId: withdrawMoney
       requestBody:
@@ -305,8 +305,8 @@ components:
       required: [ userId, price ]
       properties:
         userId:
-          type: integer
-          format: int64
+          type: string
+          format: uuid
         price:
           type: number
           minimum: 1
@@ -325,13 +325,13 @@ components:
           readOnly: true
     BillingUpdate:
       type: object
-      required: [amount]
+      required: [ amount ]
       properties:
         amount:
           type: number
     Payment:
       type: object
-      required: [amount]
+      required: [ amount ]
       properties:
         id:
           type: string

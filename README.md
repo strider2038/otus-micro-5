@@ -16,7 +16,7 @@ HTTP серверы и Kafka Consumer'ы, поэтому масштабиров�
   * [x] billing api
   * [x] billing identity consumer
   * [x] billing worker
-* [ ] order service
+* [x] order service
 * [ ] notification service
 * [ ] transactions ?
 
