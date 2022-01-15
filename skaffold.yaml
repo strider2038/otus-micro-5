@@ -43,6 +43,18 @@ build:
       docker:
         dockerfile: build/package/migrations/Dockerfile
 
+    ### Notification service
+    - image: strider2038/otus-micro-5-notification-service
+      context: services/notification-service
+      docker:
+        dockerfile: build/package/notification-service/Dockerfile
+        buildArgs:
+          APP_VERSION: local
+    - image: strider2038/otus-micro-5-notification-migrations
+      context: services/notification-service
+      docker:
+        dockerfile: build/package/migrations/Dockerfile
+
 deploy:
   helm:
     releases:
@@ -66,3 +78,10 @@ deploy:
         wait: true
         valuesFiles:
           - "deploy/order-values.yaml"
+
+      - name: "notification-service"
+        namespace: "otus"
+        chartPath: "services/notification-service/deployments/notification-service"
+        wait: true
+        valuesFiles:
+          - "deploy/notification-values.yaml"

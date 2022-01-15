@@ -17,7 +17,8 @@ HTTP серверы и Kafka Consumer'ы, поэтому масштабиров�
   * [x] billing identity consumer
   * [x] billing worker
 * [x] order service
-* [ ] notification service
+* [x] notification service
+* [ ] postman tests
 * [ ] transactions ?
 
 ### Запуск приложения
@@ -25,9 +26,10 @@ HTTP серверы и Kafka Consumer'ы, поэтому масштабиров�
 ```shell
 # запуск minikube
 # версия k8s v1.19, на более поздних есть проблемы с установкой ambassador
-minikube start --cpus=6 --memory=16g --disk-size='30000mb' --vm-driver=virtualbox --cni=flannel --kubernetes-version="v1.19.0"
+minikube start --cpus=6 --memory=16g --disk-size='40000mb' --vm-driver=virtualbox --kubernetes-version="v1.19.0"
 
 kubectl create namespace otus
+kubectl config set-context --current --namespace=otus
 
 # установка Ambassador
 helm install aes datawire/ambassador -f deploy/ambassador-values.yaml

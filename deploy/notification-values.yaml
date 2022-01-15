@@ -1,7 +1,7 @@
 replicaCount: 2
 
 migrations:
-  version: "20220109132407"
+  version: "20220115183225"
 
 postgresql:
   postgresqlPassword: "pa$$word"
@@ -11,9 +11,7 @@ postgresql:
 secrets:
   postgres:
     password: "pa$$word"
-    host: "billing-service-postgresql.otus.svc.cluster.local"
+    host: "notification-service-postgresql.otus.svc.cluster.local"
   kafka:
     consumer:
       url: "kafka.otus.svc.cluster.local:9092"
-    producer:
-      url: "kafka-0.kafka-headless.otus.svc.cluster.local:9092"
