@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+	"github.com/strider2038/pkg/persistence"
 )
 
 type CreatePayment struct {
@@ -34,20 +35,23 @@ func (p PaymentFailed) Name() string {
 }
 
 type CreatePaymentProcessor struct {
-	accounts   billing.AccountRepository
-	payments   billing.PaymentRepository
-	dispatcher Dispatcher
+	accounts           billing.AccountRepository
+	payments           billing.PaymentRepository
+	transactionManager persistence.TransactionManager
+	dispatcher         Dispatcher
 }
 
 func NewCreatePaymentProcessor(
 	accounts billing.AccountRepository,
 	payments billing.PaymentRepository,
+	transactionManager persistence.TransactionManager,
 	dispatcher Dispatcher,
 ) *CreatePaymentProcessor {
 	return &CreatePaymentProcessor{
-		accounts:   accounts,
-		payments:   payments,
-		dispatcher: dispatcher,
+		accounts:           accounts,
+		payments:           payments,
+		transactionManager: transactionManager,
+		dispatcher:         dispatcher,
 	}
 }
 
@@ -58,42 +62,53 @@ func (processor *CreatePaymentProcessor) Process(ctx context.Context, message []
 		return errors.Wrap(err, "failed to unmarshal CreatePayment command")
 	}
 
-	account, err := processor.accounts.FindByID(ctx, command.UserID)
+	err = processor.transactionManager.DoTransactionally(ctx, processor.addPayment(&billing.Payment{
+		ID:        command.ID,
+		AccountID: command.UserID,
+		Amount:    command.Amount,
+	}))
 	if err != nil {
-		return errors.WithMessagef(err, `failed to find user account by id "%s"`, command.UserID)
+		return err
 	}
 
-	account.Amount -= command.Amount
-	if account.Amount < 0 {
-		err = processor.dispatcher.Dispatch(ctx, PaymentFailed{
-			ID:     command.ID,
-			Reason: "not enough money",
-		})
+	return nil
+}
+
+func (processor *CreatePaymentProcessor) addPayment(payment *billing.Payment) func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		account, err := processor.accounts.FindByIDForUpdate(ctx, payment.AccountID)
 		if err != nil {
-			return errors.WithMessage(err, "failed to dispatch PaymentFailed event")
+			return errors.WithMessagef(err, `failed to find user account by id "%s"`, payment.AccountID)
+		}
+
+		account.Amount -= payment.Amount
+		if account.Amount < 0 {
+			err = processor.dispatcher.Dispatch(ctx, PaymentFailed{
+				ID:     payment.ID,
+				Reason: "not enough money",
+			})
+			if err != nil {
+				return errors.WithMessage(err, "failed to dispatch PaymentFailed event")
+			}
+
+			return nil
+		}
+
+		err = processor.payments.Add(ctx, payment)
+		if err != nil {
+			return errors.WithMessagef(err, `failed to add payment "%s" for user "%s"`, payment.ID, payment.AccountID)
+		}
+
+		err = processor.accounts.Save(ctx, account)
+		if err != nil {
+			return errors.WithMessagef(err, `failed to save user account "%s"`, account.ID)
+		}
+
+		err = processor.dispatcher.Dispatch(ctx, PaymentCreated{ID: payment.ID})
+		if err != nil {
+			return errors.WithMessage(err, "failed to dispatch PaymentCreated event")
 		}
 
 		return nil
 	}
-
-	err = processor.payments.Add(ctx, &billing.Payment{
-		ID:        command.ID,
-		AccountID: command.UserID,
-		Amount:    command.Amount,
-	})
-	if err != nil {
-		return errors.WithMessagef(err, `failed to add payment "%s" for user "%s"`, command.ID, command.UserID)
-	}
-
-	err = processor.accounts.Save(ctx, account)
-	if err != nil {
-		return errors.WithMessagef(err, `failed to save user account "%s"`, account.ID)
-	}
-
-	err = processor.dispatcher.Dispatch(ctx, PaymentCreated{ID: command.ID})
-	if err != nil {
-		return errors.WithMessage(err, "failed to dispatch PaymentCreated event")
-	}
-
-	return nil
 }

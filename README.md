@@ -9,24 +9,12 @@
 Для реализации выбран гибридный вариант (REST + Event collaboration). Для упрощения сервисы объединяют в себе
 HTTP серверы и Kafka Consumer'ы, поэтому масштабирование подов ограничено количеством партиций топиков в Kafka.
 
-### TODO
-
-* [x] identity service (dispatch events)
-* [x] billing service
-  * [x] billing api
-  * [x] billing identity consumer
-  * [x] billing worker
-* [x] order service
-* [x] notification service
-* [ ] postman tests
-* [ ] transactions ?
-
 ### Запуск приложения
 
 ```shell
 # запуск minikube
 # версия k8s v1.19, на более поздних есть проблемы с установкой ambassador
-minikube start --cpus=6 --memory=16g --disk-size='40000mb' --vm-driver=virtualbox --kubernetes-version="v1.19.0"
+minikube start --cpus=6 --memory=16g --disk-size='40000mb' --vm-driver=virtualbox --cni=flannel --kubernetes-version="v1.19.0"
 
 kubectl create namespace otus
 kubectl config set-context --current --namespace=otus
@@ -39,6 +27,9 @@ helm install kafka bitnami/kafka -f deploy/kafka-values.yaml
 
 ## запуск проекта
 helm install --wait -f deploy/identity-values.yaml identity-service ./services/identity-service/deployments/identity-service --atomic
+helm install --wait -f deploy/billing-values.yaml billing-service ./services/billing-service/deployments/billing-service --atomic
+helm install --wait -f deploy/order-values.yaml order-service ./services/order-service/deployments/order-service --atomic
+helm install --wait -f deploy/notification-values.yaml notification-service ./services/notification-service/deployments/notification-service --atomic
 
 # применение настроек ambassador
 kubectl apply -f services/ambassador/

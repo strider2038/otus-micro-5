@@ -70,6 +70,26 @@ func (q *Queries) FindAccount(ctx context.Context, id uuid.UUID) (Account, error
 	return i, err
 }
 
+const findAccountForUpdate = `-- name: FindAccountForUpdate :one
+SELECT id, amount, created_at, updated_at
+FROM "account"
+WHERE id = $1
+LIMIT 1
+FOR UPDATE
+`
+
+func (q *Queries) FindAccountForUpdate(ctx context.Context, id uuid.UUID) (Account, error) {
+	row := q.db.QueryRow(ctx, findAccountForUpdate, id)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Amount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateAccount = `-- name: UpdateAccount :one
 UPDATE "account"
 SET amount = $2, updated_at = now()

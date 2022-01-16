@@ -9,18 +9,31 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
+	postgres "github.com/strider2038/pkg/persistence/pgx"
 )
 
 type AccountRepository struct {
-	db *database.Queries
+	conn postgres.Connection
 }
 
-func NewAccountRepository(db *database.Queries) *AccountRepository {
-	return &AccountRepository{db: db}
+func NewAccountRepository(conn postgres.Connection) *AccountRepository {
+	return &AccountRepository{conn: conn}
 }
 
 func (repository *AccountRepository) FindByID(ctx context.Context, id uuid.UUID) (*billing.Account, error) {
-	account, err := repository.db.FindAccount(ctx, id)
+	account, err := repository.queries(ctx).FindAccount(ctx, id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, billing.ErrAccountNotFound
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to find account")
+	}
+
+	return accountFromDB(account), nil
+}
+
+func (repository *AccountRepository) FindByIDForUpdate(ctx context.Context, id uuid.UUID) (*billing.Account, error) {
+	account, err := repository.queries(ctx).FindAccountForUpdate(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, billing.ErrAccountNotFound
 	}
@@ -32,7 +45,7 @@ func (repository *AccountRepository) FindByID(ctx context.Context, id uuid.UUID)
 }
 
 func (repository *AccountRepository) Create(ctx context.Context, id uuid.UUID) (*billing.Account, error) {
-	account, err := repository.db.CreateAccount(ctx, id)
+	account, err := repository.queries(ctx).CreateAccount(ctx, id)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create account")
 	}
@@ -41,7 +54,7 @@ func (repository *AccountRepository) Create(ctx context.Context, id uuid.UUID) (
 }
 
 func (repository *AccountRepository) Save(ctx context.Context, account *billing.Account) error {
-	a, err := repository.db.UpdateAccount(ctx, database.UpdateAccountParams{
+	a, err := repository.queries(ctx).UpdateAccount(ctx, database.UpdateAccountParams{
 		ID:     account.ID,
 		Amount: account.Amount,
 	})
@@ -53,6 +66,10 @@ func (repository *AccountRepository) Save(ctx context.Context, account *billing.
 	account.UpdatedAt = a.UpdatedAt
 
 	return nil
+}
+
+func (repository *AccountRepository) queries(ctx context.Context) *database.Queries {
+	return database.New(repository.conn.Scope(ctx))
 }
 
 func accountFromDB(account database.Account) *billing.Account {

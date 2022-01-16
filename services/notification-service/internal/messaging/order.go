@@ -89,7 +89,7 @@ func (processor *OrderFailedProcessor) Process(ctx context.Context, message []by
 	err = processor.notifications.Add(ctx, notifications.NewNotification(
 		order.UserID,
 		fmt.Sprintf(
-			"Dear, %s %s! Your order for %.2f was not fulfilled due to: %s.",
+			"Dear, %s %s! Your order for %.2f$ was not fulfilled due to: %s.",
 			user.FirstName,
 			user.LastName,
 			order.Price,

@@ -19,6 +19,7 @@ type Account struct {
 
 type AccountRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*Account, error)
+	FindByIDForUpdate(ctx context.Context, id uuid.UUID) (*Account, error)
 	Create(ctx context.Context, id uuid.UUID) (*Account, error)
 	Save(ctx context.Context, account *Account) error
 }

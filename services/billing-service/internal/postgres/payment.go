@@ -7,18 +7,19 @@ import (
 	"billing-service/internal/postgres/database"
 
 	"github.com/pkg/errors"
+	postgres "github.com/strider2038/pkg/persistence/pgx"
 )
 
 type PaymentRepository struct {
-	db *database.Queries
+	conn postgres.Connection
 }
 
-func NewPaymentRepository(db *database.Queries) *PaymentRepository {
-	return &PaymentRepository{db: db}
+func NewPaymentRepository(conn postgres.Connection) *PaymentRepository {
+	return &PaymentRepository{conn: conn}
 }
 
 func (repository *PaymentRepository) Add(ctx context.Context, payment *billing.Payment) error {
-	_, err := repository.db.CreatePayment(ctx, database.CreatePaymentParams{
+	_, err := database.New(repository.conn.Scope(ctx)).CreatePayment(ctx, database.CreatePaymentParams{
 		ID:        payment.ID,
 		AccountID: payment.AccountID,
 		Amount:    payment.Amount,

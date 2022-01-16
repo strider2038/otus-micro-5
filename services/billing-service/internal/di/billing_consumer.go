@@ -4,16 +4,15 @@ import (
 	"billing-service/internal/kafka"
 	"billing-service/internal/messaging"
 	"billing-service/internal/postgres"
-	"billing-service/internal/postgres/database"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	segmentio "github.com/segmentio/kafka-go"
+	"github.com/strider2038/pkg/persistence/pgx"
 )
 
-func NewBillingConsumer(connection *pgxpool.Pool, config Config) *kafka.Consumer {
-	db := database.New(connection)
-	accounts := postgres.NewAccountRepository(db)
-	payments := postgres.NewPaymentRepository(db)
+func NewBillingConsumer(connection pgx.Connection, config Config) *kafka.Consumer {
+	accounts := postgres.NewAccountRepository(connection)
+	payments := postgres.NewPaymentRepository(connection)
+	txManager := pgx.NewTransactionManager(connection)
 
 	writer := &segmentio.Writer{
 		Addr:     segmentio.TCP(config.KafkaProducerURL),
@@ -29,7 +28,7 @@ func NewBillingConsumer(connection *pgxpool.Pool, config Config) *kafka.Consumer
 	})
 
 	consumer := kafka.NewConsumer(reader, map[string]kafka.Processor{
-		"Billing/CreatePayment": messaging.NewCreatePaymentProcessor(accounts, payments, dispatcher),
+		"Billing/CreatePayment": messaging.NewCreatePaymentProcessor(accounts, payments, txManager, dispatcher),
 	})
 
 	return consumer

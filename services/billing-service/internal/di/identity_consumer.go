@@ -4,15 +4,13 @@ import (
 	"billing-service/internal/kafka"
 	"billing-service/internal/messaging"
 	"billing-service/internal/postgres"
-	"billing-service/internal/postgres/database"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	segmentio "github.com/segmentio/kafka-go"
+	"github.com/strider2038/pkg/persistence/pgx"
 )
 
-func NewIdentityConsumer(connection *pgxpool.Pool, config Config) *kafka.Consumer {
-	db := database.New(connection)
-	accounts := postgres.NewAccountRepository(db)
+func NewIdentityConsumer(connection pgx.Connection, config Config) *kafka.Consumer {
+	accounts := postgres.NewAccountRepository(connection)
 
 	reader := segmentio.NewReader(segmentio.ReaderConfig{
 		Brokers: []string{config.KafkaConsumerURL},

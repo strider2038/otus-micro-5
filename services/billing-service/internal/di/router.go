@@ -7,18 +7,16 @@ import (
 
 	"billing-service/internal/api"
 	"billing-service/internal/postgres"
-	"billing-service/internal/postgres/database"
 
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/strider2038/pkg/persistence/pgx"
 )
 
-func NewAPIRouter(connection *pgxpool.Pool, config Config) (http.Handler, error) {
-	db := database.New(connection)
-
-	accountRepository := postgres.NewAccountRepository(db)
-	billingApiService := api.NewBillingApiService(accountRepository)
+func NewAPIRouter(connection pgx.Connection, config Config) (http.Handler, error) {
+	accountRepository := postgres.NewAccountRepository(connection)
+	txManager := pgx.NewTransactionManager(connection)
+	billingApiService := api.NewBillingApiService(accountRepository, txManager)
 	billingApiController := api.NewBillingApiController(billingApiService)
 
 	apiRouter := api.NewRouter(billingApiController)
@@ -34,7 +32,7 @@ func NewAPIRouter(connection *pgxpool.Pool, config Config) (http.Handler, error)
 	return router, nil
 }
 
-func NewRouter(connection *pgxpool.Pool, config Config) *mux.Router {
+func NewRouter(connection pgx.Connection, config Config) *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/health", func(writer http.ResponseWriter, request *http.Request) {

@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/strider2038/httpserver"
 	"github.com/strider2038/ossync"
+	"github.com/strider2038/pkg/persistence/pgx"
 )
 
 var (
@@ -24,10 +25,11 @@ func main() {
 		log.Fatal("invalid config:", err)
 	}
 
-	connection, err := pgxpool.Connect(context.Background(), config.DatabaseURL)
+	pool, err := pgxpool.Connect(context.Background(), config.DatabaseURL)
 	if err != nil {
 		log.Fatal("failed to connect to postgres:", err)
 	}
+	connection := pgx.NewPool(pool)
 	router, err := di.NewAPIRouter(connection, config)
 	if err != nil {
 		log.Fatal("failed to create router: ", err)

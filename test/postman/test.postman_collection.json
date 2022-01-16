@@ -1,0 +1,721 @@
+{
+	"info": {
+		"_postman_id": "58f4b960-7293-4205-9170-284a2b85fcc6",
+		"name": "otus homework 6",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "register user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var request = JSON.parse(request.data);",
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful POST request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([201]);",
+							"});",
+							"pm.test(\"Assert attributes\", function () {",
+							"    pm.expect(response.email).to.eql(request.email);",
+							"    pm.expect(response.firstName).to.eql(request.firstName);",
+							"    pm.expect(response.lastName).to.eql(request.lastName);",
+							"});",
+							"",
+							"pm.environment.set(\"userId\", response.id);",
+							"pm.environment.set(\"userEmail\", response.email);",
+							"",
+							"setTimeout(function(){}, 200)",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"{{$randomEmail}}\",\n  \"password\": \"pa$$word\",\n  \"firstName\": \"{{$randomLastName}}\",\n  \"lastName\": \"{{$randomFirstName}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://arch.homework/api/v1/identity/register",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"identity",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"function jwt_decode(a) {",
+							"    var parts = a.split('.'); // header, payload, signature",
+							"    return JSON.parse(atob(parts[1]));",
+							"}",
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Login success\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+							"});",
+							"pm.test(\"Assert access token\", function () {",
+							"    pm.expect(response.accessToken).to.be.a(\"string\");",
+							"    let token=jwt_decode(response.accessToken);",
+							"    pm.expect(token.userId).to.eq(pm.environment.get(\"userId\"));",
+							"    pm.expect(token.email).to.eq(pm.environment.get(\"userEmail\"));",
+							"});",
+							"",
+							"pm.environment.set(\"accessToken\", response.accessToken);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"pa$$word\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://arch.homework/api/v1/identity/login",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"identity",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get billing account (empty)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful GET request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+							"});",
+							"pm.test(\"Assert billing account is empty\", function () {",
+							"    pm.expect(response.amount).to.eql(0);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://arch.homework/api/v1/billing/account",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"billing",
+						"account"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deposit money",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Successful POST request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([204]);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 1000\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://arch.homework/api/v1/billing/account/deposit",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"billing",
+						"account",
+						"deposit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get billing account (with deposit)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful GET request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+							"});",
+							"pm.test(\"Assert billing account is empty\", function () {",
+							"    pm.expect(response.amount).to.eql(1000);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://arch.homework/api/v1/billing/account",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"billing",
+						"account"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "make order 1",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful POST request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([202]);",
+							"});",
+							"pm.test(\"Assert order attributes\", function () {",
+							"    pm.expect(response.status).to.eql(\"pending\");",
+							"    pm.expect(response.price).to.eql(600);",
+							"});",
+							"",
+							"pm.environment.set(\"orderId\", response.id);",
+							"",
+							"setTimeout(function(){}, 2000)",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"price\": 600\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://arch.homework/api/v1/ordering/orders",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ordering",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get billing account (after order 1)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful GET request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+							"});",
+							"pm.test(\"Assert billing account with money\", function () {",
+							"    pm.expect(response.amount).to.eql(400);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://arch.homework/api/v1/billing/account",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"billing",
+						"account"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get orders (successful order)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful GET request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+							"});",
+							"pm.test(\"Assert orders has one successful order\", function () {",
+							"    pm.expect(response[0].id).to.eql(pm.environment.get(\"orderId\"));",
+							"    pm.expect(response[0].status).to.eql(\"succeeded\");",
+							"    pm.expect(response[0].price).to.eql(600);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://arch.homework/api/v1/ordering/orders",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ordering",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get notifications (successful order)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful GET request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+							"});",
+							"pm.test(\"Assert notifications with successful order\", function () {",
+							"    pm.expect(response[0].message).to.include('Your order for 600.00$ has been succesfully processed');",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://arch.homework/api/v1/notifications",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"notifications"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "make order 2",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful POST request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([202]);",
+							"});",
+							"pm.test(\"Assert order attributes\", function () {",
+							"    pm.expect(response.status).to.eql(\"pending\");",
+							"    pm.expect(response.price).to.eql(500);",
+							"});",
+							"",
+							"pm.environment.set(\"orderId\", response.id);",
+							"",
+							"setTimeout(function(){}, 2000)",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"price\": 500\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://arch.homework/api/v1/ordering/orders",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ordering",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get billing account (after order 2)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful GET request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+							"});",
+							"pm.test(\"Assert billing account with money\", function () {",
+							"    pm.expect(response.amount).to.eql(400);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://arch.homework/api/v1/billing/account",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"billing",
+						"account"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get orders (failed order)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful GET request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+							"});",
+							"pm.test(\"Assert orders has one successful order\", function () {",
+							"    pm.expect(response[0].id).to.eql(pm.environment.get(\"orderId\"));",
+							"    pm.expect(response[0].status).to.eql(\"failed\");",
+							"    pm.expect(response[0].price).to.eql(500);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://arch.homework/api/v1/ordering/orders",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ordering",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get notifications (failed order)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = pm.response.json();",
+							"",
+							"pm.test(\"Successful GET request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+							"});",
+							"pm.test(\"Assert notifications with successful order\", function () {",
+							"    pm.expect(response[0].message).to.include('Your order for 500.00$ was not fulfilled due to: not enough money');",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://arch.homework/api/v1/notifications",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"notifications"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

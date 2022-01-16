@@ -1,0 +1,103 @@
+name: Build docker release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release-docker:
+    name: release docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set APP_VERSION env
+        run: echo "APP_VERSION=$(echo ${GITHUB_REF} | rev | cut -d'/' -f 1 | rev )" >> $GITHUB_ENV
+      - name: Environment Printer
+        uses: managedkaos/print-env@v1.0
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push identity service
+        uses: docker/build-push-action@v2
+        with:
+          context: services/identity-service
+          file: services/identity-service/build/package/identity-service/Dockerfile
+          tags: strider2038/otus-micro-5-identity-service:latest, strider2038/otus-micro-5-identity-service:${{ env.APP_VERSION }}
+          pull: true
+          push: true
+          build-args: APP_VERSION=${{ env.APP_VERSION }}
+
+      - name: Build and push migrations
+        uses: docker/build-push-action@v2
+        with:
+          context: services/identity-service
+          file: services/identity-service/build/package/migrations/Dockerfile
+          tags: strider2038/otus-micro-5-identity-migrations:latest, strider2038/otus-micro-5-identity-migrations:${{ env.APP_VERSION }}
+          pull: true
+          push: true
+          build-args: APP_VERSION=${{ env.APP_VERSION }}
+
+      - name: Build and push billing service
+        uses: docker/build-push-action@v2
+        with:
+          context: services/billing-service
+          file: services/billing-service/build/package/billing-service/Dockerfile
+          tags: strider2038/otus-micro-5-billing-service:latest, strider2038/otus-micro-5-billing-service:${{ env.APP_VERSION }}
+          pull: true
+          push: true
+          build-args: APP_VERSION=${{ env.APP_VERSION }}
+
+      - name: Build and push migrations
+        uses: docker/build-push-action@v2
+        with:
+          context: services/billing-service
+          file: services/billing-service/build/package/migrations/Dockerfile
+          tags: strider2038/otus-micro-5-billing-migrations:latest, strider2038/otus-micro-5-billing-migrations:${{ env.APP_VERSION }}
+          pull: true
+          push: true
+          build-args: APP_VERSION=${{ env.APP_VERSION }}
+
+      - name: Build and push order service
+        uses: docker/build-push-action@v2
+        with:
+          context: services/order-service
+          file: services/order-service/build/package/order-service/Dockerfile
+          tags: strider2038/otus-micro-5-order-service:latest, strider2038/otus-micro-5-order-service:${{ env.APP_VERSION }}
+          pull: true
+          push: true
+          build-args: APP_VERSION=${{ env.APP_VERSION }}
+
+      - name: Build and push migrations
+        uses: docker/build-push-action@v2
+        with:
+          context: services/order-service
+          file: services/order-service/build/package/migrations/Dockerfile
+          tags: strider2038/otus-micro-5-order-migrations:latest, strider2038/otus-micro-5-order-migrations:${{ env.APP_VERSION }}
+          pull: true
+          push: true
+          build-args: APP_VERSION=${{ env.APP_VERSION }}
+
+      - name: Build and push notification service
+        uses: docker/build-push-action@v2
+        with:
+          context: services/notification-service
+          file: services/notification-service/build/package/notification-service/Dockerfile
+          tags: strider2038/otus-micro-5-notification-service:latest, strider2038/otus-micro-5-notification-service:${{ env.APP_VERSION }}
+          pull: true
+          push: true
+          build-args: APP_VERSION=${{ env.APP_VERSION }}
+
+      - name: Build and push migrations
+        uses: docker/build-push-action@v2
+        with:
+          context: services/notification-service
+          file: services/notification-service/build/package/migrations/Dockerfile
+          tags: strider2038/otus-micro-5-notification-migrations:latest, strider2038/otus-micro-5-notification-migrations:${{ env.APP_VERSION }}
+          pull: true
+          push: true
+          build-args: APP_VERSION=${{ env.APP_VERSION }}
