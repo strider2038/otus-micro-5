@@ -8,6 +8,12 @@ postgresql:
   persistence:
     size: 1Gi
 
+redis:
+  auth:
+    enabled: false
+  replica:
+    replicaCount: 1
+
 secrets:
   postgres:
     password: "pa$$word"
@@ -17,3 +23,5 @@ secrets:
       url: "kafka.otus.svc.cluster.local:9092"
     producer:
       url: "kafka-0.kafka-headless.otus.svc.cluster.local:9092"
+  redis:
+    url: "order-service-redis-master.otus.svc.cluster.local:6379"

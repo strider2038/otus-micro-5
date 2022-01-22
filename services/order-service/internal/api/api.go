@@ -30,5 +30,5 @@ type OrderingApiRouter interface {
 // and updated with the logic required for the API.
 type OrderingApiServicer interface {
 	CreateOrder(context.Context, CreateOrderForm) (ImplResponse, error)
-	GetOrders(context.Context, uuid.UUID) (ImplResponse, error)
+	GetOrders(context.Context, uuid.UUID) (ImplResponse, string, error)
 }

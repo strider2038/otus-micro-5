@@ -11,14 +11,21 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
+	"strconv"
+	"time"
 
 	"order-service/internal/messaging"
 	"order-service/internal/ordering"
 
+	"github.com/bsm/redislock"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 )
+
+const lockTimeout = 5 * time.Second
 
 // OrderingApiService is a service that implents the logic for the OrderingApiServicer
 // This service should implement the business logic for every endpoint for the OrderingApi API.
@@ -26,31 +33,80 @@ import (
 type OrderingApiService struct {
 	orders     ordering.OrderRepository
 	dispatcher messaging.Dispatcher
+	locker     *redislock.Client
 }
 
 // NewOrderingApiService creates a default api service
-func NewOrderingApiService(orders ordering.OrderRepository, dispatcher messaging.Dispatcher) OrderingApiServicer {
-	return &OrderingApiService{orders: orders, dispatcher: dispatcher}
+func NewOrderingApiService(
+	orders ordering.OrderRepository,
+	dispatcher messaging.Dispatcher,
+	locker *redislock.Client,
+) OrderingApiServicer {
+	return &OrderingApiService{orders: orders, dispatcher: dispatcher, locker: locker}
 }
 
 // GetOrders -
-func (s *OrderingApiService) GetOrders(ctx context.Context, userID uuid.UUID) (ImplResponse, error) {
+func (s *OrderingApiService) GetOrders(ctx context.Context, userID uuid.UUID) (ImplResponse, string, error) {
 	orders, err := s.orders.FindByUser(ctx, userID)
 	if err != nil {
-		return Response(http.StatusInternalServerError, nil), errors.WithMessagef(
+		return Response(http.StatusInternalServerError, nil), "", errors.WithMessagef(
 			err,
 			"failed to find orders for user %s",
 			userID,
 		)
 	}
 
-	return Response(http.StatusOK, orders), nil
+	key := makeOrdersIdempotenceKey(userID, len(orders))
+
+	return Response(http.StatusOK, orders), key, nil
 }
 
 // CreateOrderForm -
 func (s *OrderingApiService) CreateOrder(ctx context.Context, form CreateOrderForm) (ImplResponse, error) {
+	if form.UserID.IsNil() {
+		return Response(http.StatusForbidden, Error{
+			Code:    http.StatusForbidden,
+			Message: "Access denied",
+		}), nil
+	}
+	if form.IdempotenceKey == "" {
+		return Response(http.StatusPreconditionRequired, Error{
+			Code:    http.StatusPreconditionRequired,
+			Message: "Missing If-Match header",
+		}), nil
+	}
+
+	lock, err := s.locker.Obtain(ctx, form.UserID.String()+":orders", lockTimeout, nil)
+	if errors.Is(err, redislock.ErrNotObtained) {
+		return Response(http.StatusConflict, Error{
+			Code:    http.StatusConflict,
+			Message: "Resource is locked",
+		}), nil
+	}
+	if err != nil {
+		return Response(http.StatusInternalServerError, nil), errors.WithMessagef(err, "failed to obtain lock")
+	}
+	defer lock.Release(ctx)
+
+	count, err := s.orders.CountByUser(ctx, form.UserID)
+	if err != nil {
+		return Response(http.StatusInternalServerError, nil), errors.WithMessagef(
+			err,
+			"failed to count orders of user %s",
+			form.UserID,
+		)
+	}
+
+	key := makeOrdersIdempotenceKey(form.UserID, count)
+	if key != form.IdempotenceKey {
+		return Response(http.StatusPreconditionFailed, Error{
+			Code:    http.StatusPreconditionFailed,
+			Message: "State of user orders has changed",
+		}), nil
+	}
+
 	order := ordering.NewOrder(form.UserID, form.Price)
-	err := s.orders.Save(ctx, order)
+	err = s.orders.Save(ctx, order)
 	if err != nil {
 		return Response(http.StatusInternalServerError, nil), errors.WithMessagef(
 			err,
@@ -73,4 +129,10 @@ func (s *OrderingApiService) CreateOrder(ctx context.Context, form CreateOrderFo
 	}
 
 	return Response(http.StatusAccepted, order), nil
+}
+
+func makeOrdersIdempotenceKey(userID uuid.UUID, count int) string {
+	hash := sha256.Sum256([]byte(userID.String() + ":orders:" + strconv.Itoa(count)))
+
+	return hex.EncodeToString(hash[:])
 }

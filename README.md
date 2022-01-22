@@ -1,13 +1,14 @@
-# Otus Microservice architecture Homework 6
+# Otus Microservice architecture Homework 7
 
 ## Домашнее задание выполнено для курса ["Microservice architecture"](https://otus.ru/lessons/microservice-architecture/)
 
-### Теоретическая часть
+### Реализация идемпотентности метода заказа
 
-[Исследование вариантов реализации системы](docs/design.md).
+В рамках задания добавлена идемпотентность для метода создания заказа `POST /api/v1/ordering/orders` на основе использования тега коллекции [`ETag`](https://developer.mozilla.org/ru/docs/Web/HTTP/Headers/ETag). Дополнительно, для обеспечения разрешения гонок (если запрос на создание заказа отправлен дважды за короткое время) добавлена эксклюзивная блокировка с использованием Redis.
 
-Для реализации выбран гибридный вариант (REST + Event collaboration). Для упрощения сервисы объединяют в себе
-HTTP серверы и Kafka Consumer'ы, поэтому масштабирование подов ограничено количеством партиций топиков в Kafka.
+Алгоритм работы.
+
+[![Алгоритм идемпотентности](docs/idempotence.png)](https://mermaid.live/view/#pako:eNqNVE1vwjAM_StWziAY2mU9IE0MbdM-YGPSLr1kidtaaxOWpEwI8d-XklZrYcByqGL72c96drNhQktkEbP4VaISeEM8NbyIFfjDhdMGJjmhcsETvsHTH49nRqIBi2ZFAiO4nb7BgC9psLoY6CpEKg0XGxI7eJ8_19alBhcvjxGk6KCN_Y31D5kCEL7JZSB02bTXre_TQqcRjIZDmD0E0LN2CHrlgR14Dxrw9I2nkCGvgjuGjNsMPtZQeiiQBK5k00GL_Jgq89nijCxnO3qvurhP-k_cieygtb-1fUVJ1iv14TgpyLX4rIeaO3j0FiSccpTBWZ1dwh9a89x4wvWuRBt_VOzL4RVMtEpyErU0mFsMpLYUAlH-h7fiq9s_Tntsh9qD-e827aXsE-0l-XFRsm4NoBH3rtqWgmxRDes3dFqyixHMDQqtJDnS6mA4OwVD5XNlu5KQ8v5alW7WaUk-T1PU25UYxNZunRvp6aqd_3UE135Tlq4jgqoNf2E9VqApOEn_em0qd8xchgXGLPJXiQkvcxezWG09tFxK7nDqxdWGRc6U2GO8dHqxVqKxA6Z-AINz-wM_mKf0)
 
 ### Запуск приложения
 
@@ -40,13 +41,20 @@ kubectl apply -f services/ambassador/
 Тесты Postman расположены в директории `test/postman`. Запуск тестов.
 
 ```bash
-newman run ./test/postman/test.postman_collection.json
+newman run ./test/postman/test_idempotence.postman_collection.json
 ```
 
 Или с использованием Docker.
 
 ```bash
-docker run -v $PWD/test/postman/:/etc/newman --network host -t postman/newman:alpine run test.postman_collection.json
+docker run -v $PWD/test/postman/:/etc/newman --network host -t postman/newman:alpine run test_idempotence.postman_collection.json
+```
+
+Дополнительно, для проверки ситуации гонок написаны тесты на Go
+
+```shell
+cd test
+go test ./racetest/race_test.go
 ```
 
 ### Отладка

@@ -7,6 +7,7 @@ import (
 
 	"order-service/internal/di"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/strider2038/httpserver"
@@ -24,11 +25,21 @@ func main() {
 		log.Fatal("invalid config:", err)
 	}
 
-	connection, err := pgxpool.Connect(context.Background(), config.DatabaseURL)
+	postgresConnection, err := pgxpool.Connect(context.Background(), config.DatabaseURL)
 	if err != nil {
 		log.Fatal("failed to connect to postgres:", err)
 	}
-	router, err := di.NewAPIRouter(connection, config)
+	redisClient := redis.NewClient(&redis.Options{
+		Network: "tcp",
+		Addr:    config.RedisURL,
+	})
+	ping := redisClient.Ping(context.Background())
+	err = ping.Err()
+	if err != nil {
+		log.Fatal("failed to connect to redis:", err)
+	}
+
+	router, err := di.NewAPIRouter(postgresConnection, redisClient, config)
 	if err != nil {
 		log.Fatal("failed to create router: ", err)
 	}
@@ -38,7 +49,7 @@ func main() {
 
 	group := ossync.NewGroup(context.Background())
 	group.Go(httpserver.New(address, router).ListenAndServe)
-	group.Go(di.NewBillingConsumer(connection, config).Run)
+	group.Go(di.NewBillingConsumer(postgresConnection, config).Run)
 	err = group.Wait()
 	if err != nil {
 		log.Fatalln(err)

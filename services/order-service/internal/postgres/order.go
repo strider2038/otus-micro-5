@@ -50,6 +50,15 @@ func (repository *OrderRepository) FindByPayment(ctx context.Context, paymentID 
 	return orderFromDB(order), nil
 }
 
+func (repository *OrderRepository) CountByUser(ctx context.Context, userID uuid.UUID) (int, error) {
+	count, err := repository.db.CountOrdersByUser(ctx, userID)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to count orders by user")
+	}
+
+	return int(count), nil
+}
+
 func (repository *OrderRepository) Save(ctx context.Context, order *ordering.Order) error {
 	if order.ID.IsNil() {
 		order.ID = uuid.Must(uuid.NewV4())
