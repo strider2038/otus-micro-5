@@ -10,14 +10,20 @@ import (
 	"order-service/internal/postgres"
 	"order-service/internal/postgres/database"
 
+	"github.com/bsm/redislock"
+	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	segmentio "github.com/segmentio/kafka-go"
 )
 
-func NewAPIRouter(connection *pgxpool.Pool, config Config) (http.Handler, error) {
-	db := database.New(connection)
+func NewAPIRouter(
+	postgresConnection *pgxpool.Pool,
+	redisClient *redis.Client,
+	config Config,
+) (http.Handler, error) {
+	db := database.New(postgresConnection)
 
 	writer := &segmentio.Writer{
 		Addr:     segmentio.TCP(config.KafkaProducerURL),
@@ -26,8 +32,10 @@ func NewAPIRouter(connection *pgxpool.Pool, config Config) (http.Handler, error)
 	}
 	dispatcher := kafka.NewDispatcher(writer)
 
+	locker := redislock.New(redisClient)
+
 	orders := postgres.NewOrderRepository(db)
-	billingApiService := api.NewOrderingApiService(orders, dispatcher)
+	billingApiService := api.NewOrderingApiService(orders, dispatcher, locker)
 	billingApiController := api.NewOrderingApiController(billingApiService)
 
 	apiRouter := api.NewRouter(billingApiController)
@@ -36,7 +44,7 @@ func NewAPIRouter(connection *pgxpool.Pool, config Config) (http.Handler, error)
 		return api.MetricsMiddleware(handler, metrics)
 	})
 
-	router := NewRouter(connection, config)
+	router := NewRouter(postgresConnection, config)
 	router.PathPrefix("/api").Handler(apiRouter)
 	router.Handle("/metrics", promhttp.Handler())
 

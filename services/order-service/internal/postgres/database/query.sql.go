@@ -9,6 +9,19 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+const countOrdersByUser = `-- name: CountOrdersByUser :one
+SELECT count(id)
+FROM "order"
+WHERE user_id = $1
+`
+
+func (q *Queries) CountOrdersByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countOrdersByUser, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO "order" (id, price, user_id, payment_id)
 VALUES ($1, $2, $3, $4)

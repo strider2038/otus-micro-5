@@ -46,6 +46,9 @@ secrets:
     producer:
       # Required in values.yaml.
       url: ""
+  redis:
+    # Required in values.yaml.
+    url: ""
 
 postgresql:
   enabled: true
@@ -54,6 +57,9 @@ postgresql:
   postgresqlDatabase: "order_db"
   service:
     port: "5432"
+
+redis:
+  enabled: true
 
 imagePullSecrets: []
 nameOverride: ""

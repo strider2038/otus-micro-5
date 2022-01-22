@@ -10,6 +10,11 @@ FROM "order"
 WHERE id = $1
 LIMIT 1;
 
+-- name: CountOrdersByUser :one
+SELECT count(id)
+FROM "order"
+WHERE user_id = $1;
+
 -- name: FindOrderByPayment :one
 SELECT id, user_id, payment_id, price, status, created_at, updated_at
 FROM "order"

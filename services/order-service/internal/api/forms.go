@@ -12,6 +12,7 @@ package api
 import "github.com/gofrs/uuid"
 
 type CreateOrderForm struct {
-	UserID uuid.UUID `json:"-"`
-	Price  float64   `json:"price"`
+	IdempotenceKey string    `json:"-"`
+	UserID         uuid.UUID `json:"-"`
+	Price          float64   `json:"price"`
 }

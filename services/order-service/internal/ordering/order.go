@@ -38,5 +38,6 @@ type OrderRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*Order, error)
 	FindByUser(ctx context.Context, userID uuid.UUID) ([]*Order, error)
 	FindByPayment(ctx context.Context, paymentID uuid.UUID) (*Order, error)
+	CountByUser(ctx context.Context, userID uuid.UUID) (int, error)
 	Save(ctx context.Context, order *Order) error
 }

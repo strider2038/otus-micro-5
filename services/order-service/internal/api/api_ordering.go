@@ -53,6 +53,7 @@ func (c *OrderingApiController) CreateOrder(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	form.UserID = uuid.FromStringOrNil(r.Header.Get("X-User-Id"))
+	form.IdempotenceKey = r.Header.Get("If-Match")
 
 	result, err := c.service.CreateOrder(r.Context(), *form)
 	// If an error occured, encode the error with the status code
@@ -69,13 +70,14 @@ func (c *OrderingApiController) CreateOrder(w http.ResponseWriter, r *http.Reque
 func (c *OrderingApiController) GetOrders(w http.ResponseWriter, r *http.Request) {
 	userID := uuid.FromStringOrNil(r.Header.Get("X-User-Id"))
 
-	result, err := c.service.GetOrders(r.Context(), userID)
+	result, eTag, err := c.service.GetOrders(r.Context(), userID)
 	// If an error occured, encode the error with the status code
 	if err != nil {
 		EncodeJSONResponse(err.Error(), &result.Code, w)
 		return
 	}
 	// If no error, encode the body and the result code
+	w.Header().Set("ETag", eTag)
 	EncodeJSONResponse(result.Body, &result.Code, w)
 
 }
